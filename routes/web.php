@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CouponController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,6 +34,12 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/cart/add/{product}', [CartController::class, 'addToCart'])->name('cart.add');
     Route::delete('/cart/remove/{product}', [CartController::class, 'removeFromCart'])->name('cart.remove');
     Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+    
+    // Rotas de cupons
+    Route::get('/coupons', [CouponController::class, 'index'])->name('coupons.index');
+    Route::post('/coupons', [CouponController::class, 'store'])->name('coupons.store');
+    Route::post('/coupons/apply', [CouponController::class, 'apply'])->name('coupons.apply');
+    Route::put('/coupons/{coupon}', [CouponController::class, 'update'])->name('coupons.update');
 });
 
 require __DIR__.'/auth.php';
