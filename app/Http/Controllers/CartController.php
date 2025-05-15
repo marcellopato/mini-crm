@@ -7,6 +7,8 @@ use App\Services\ShippingCalculator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use App\Mail\OrderConfirmation;
+use Illuminate\Support\Facades\Mail;
 
 class CartController extends Controller
 {
@@ -128,6 +130,9 @@ class CartController extends Controller
                     'price' => $item['price']
                 ]);
             }
+
+            // Após criar o pedido, enviar e-mail
+            Mail::to($order->customer_email)->send(new OrderConfirmation($order));
 
             DB::commit();
             session()->forget('cart');
