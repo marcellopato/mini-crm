@@ -26,16 +26,26 @@ class CartController extends Controller
             'quantity' => 'required|integer|min:1'
         ]);
 
-        $stock = Stock::where('product_id', $product->id)
-            ->where('variation_id', $validated['variation_id'])
-            ->first();
-
-        if (!$stock || $stock->quantity < $validated['quantity']) {
-            return back()->with('error', 'Estoque insuficiente.');
+        if ($validated['variation_id']) {
+            $stock = Stock::where('product_id', $product->id)
+                         ->where('variation_id', $validated['variation_id'])
+                         ->first();
+        } else {
+            $stock = $product->stocks()->first();
         }
 
+        if (!$stock || $stock->quantity < $validated['quantity']) {
+            return back()->with('error', 'Quantidade solicitada não disponível em estoque.');
+        }
+
+        // Verifica se já existe no carrinho
         $cart = session()->get('cart', []);
         $itemKey = $product->id . '-' . ($validated['variation_id'] ?? 'default');
+        $currentQty = isset($cart[$itemKey]) ? $cart[$itemKey]['quantity'] : 0;
+        
+        if (($currentQty + $validated['quantity']) > $stock->quantity) {
+            return back()->with('error', 'Quantidade total excede o estoque disponível.');
+        }
 
         $cart[$itemKey] = [
             'product_id' => $product->id,

@@ -19,17 +19,30 @@
                             @csrf
                             <select name="variation_id" class="form-select mb-2">
                                 @foreach($product->variations as $variation)
-                                    <option value="{{ $variation->id }}">{{ $variation->name }}</option>
+                                    @php
+                                        $stock = $variation->stock?->quantity ?? 0;
+                                    @endphp
+                                    <option value="{{ $variation->id }}">
+                                        {{ $variation->name }} ({{ $stock }} disponíveis)
+                                    </option>
                                 @endforeach
                             </select>
                             <input type="number" name="quantity" value="1" min="1" class="form-control mb-2">
-                            <button type="submit" class="btn btn-success">Comprar</button>
+                            <button type="submit" class="btn btn-success" {{ $stock == 0 ? 'disabled' : '' }}>
+                                {{ $stock > 0 ? 'Comprar' : 'Indisponível' }}
+                            </button>
                         </form>
                     @else
+                        @php
+                            $stock = $product->stocks->first()?->quantity ?? 0;
+                        @endphp
+                        <p class="text-muted">{{ $stock }} unidades disponíveis</p>
                         <form action="{{ route('cart.add', $product) }}" method="POST">
                             @csrf
-                            <input type="number" name="quantity" value="1" min="1" class="form-control mb-2">
-                            <button type="submit" class="btn btn-success">Comprar</button>
+                            <input type="number" name="quantity" value="1" min="1" max="{{ $stock }}" class="form-control mb-2">
+                            <button type="submit" class="btn btn-success" {{ $stock == 0 ? 'disabled' : '' }}>
+                                {{ $stock > 0 ? 'Comprar' : 'Indisponível' }}
+                            </button>
                         </form>
                     @endif
                     
