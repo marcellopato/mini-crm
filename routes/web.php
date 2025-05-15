@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
@@ -26,6 +27,12 @@ Route::view('profile', 'profile')
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('products', ProductController::class);
+    
+    // Rotas do carrinho
+    Route::get('/cart', [CartController::class, 'cart'])->name('cart');
+    Route::post('/cart/add/{product}', [CartController::class, 'addToCart'])->name('cart.add');
+    Route::delete('/cart/remove/{product}', [CartController::class, 'removeFromCart'])->name('cart.remove');
+    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 });
 
 require __DIR__.'/auth.php';

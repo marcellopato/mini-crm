@@ -38,6 +38,19 @@ class CartController extends Controller
         return back()->with('success', 'Produto adicionado ao carrinho.');
     }
 
+    public function removeFromCart(Product $product)
+    {
+        $cart = session()->get('cart', []);
+        $key = $product->id . '-' . (request('variation_id') ?? 'default');
+        
+        if (isset($cart[$key])) {
+            unset($cart[$key]);
+            session()->put('cart', $cart);
+        }
+        
+        return redirect()->back()->with('success', 'Item removido do carrinho.');
+    }
+
     public function cart()
     {
         return view('cart.index');
