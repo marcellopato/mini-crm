@@ -16,7 +16,7 @@ Sistema desenvolvido com Laravel para controle de Pedidos, Produtos, Cupons e Es
 
 1. Clone o repositório
 ```bash
-git clone [https://github.com/marcellopato/mini-crm]
+git clone (https://github.com/marcellopato/mini-crm)
 cd mini-crm
 ```
 
