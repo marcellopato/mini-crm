@@ -90,13 +90,27 @@ class CartController extends Controller
             'coupon_id' => 'nullable|exists:coupons,id'
         ]);
 
-        $cart = session()->get('cart', []);
-        if (empty($cart)) {
-            return back()->with('error', 'Carrinho vazio');
-        }
-
         DB::beginTransaction();
         try {
+            $cart = session()->get('cart', []);
+            if (empty($cart)) {
+                return back()->with('error', 'Carrinho vazio');
+            }
+
+            // Verificar estoque antes de finalizar
+            foreach ($cart as $key => $item) {
+                $productId = explode('-', $key)[0];
+                $variationId = explode('-', $key)[1] ?? null;
+                
+                $stock = Stock::where('product_id', $productId)
+                    ->where('variation_id', $variationId !== 'default' ? $variationId : null)
+                    ->first();
+                
+                if (!$stock || $stock->quantity < $item['quantity']) {
+                    throw new \Exception('Produto sem estoque suficiente.');
+                }
+            }
+
             // Consulta CEP
             $response = Http::get("https://viacep.com.br/ws/{$validated['cep']}/json/");
             if (!$response->successful()) {
@@ -131,11 +145,30 @@ class CartController extends Controller
                 'coupon_id' => $validated['coupon_id']
             ]);
 
-            // Cria itens do pedido
+            // Atualizar estoque
             foreach ($cart as $key => $item) {
                 $productId = explode('-', $key)[0];
+                $variationId = explode('-', $key)[1] ?? 'default';
+                
+                $stock = Stock::where('product_id', $productId)
+                    ->where('variation_id', $variationId !== 'default' ? $variationId : null)
+                    ->first();
+                
+                if (!$stock) {
+                    throw new \Exception('Erro ao atualizar estoque: produto não encontrado.');
+                }
+                
+                $stock->decrement('quantity', $item['quantity']);
+            }
+            
+            // Cria itens do pedido após confirmar estoque
+            foreach ($cart as $key => $item) {
+                $productId = explode('-', $key)[0];
+                $variationId = explode('-', $key)[1] ?? 'default';
+                
                 $order->items()->create([
                     'product_id' => $productId,
+                    'variation_id' => $variationId !== 'default' ? $variationId : null,
                     'quantity' => $item['quantity'],
                     'price' => $item['price']
                 ]);
