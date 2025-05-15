@@ -68,6 +68,7 @@ class ProductController extends Controller
 
     public function edit(Product $product)
     {
+        $product->load(['variations.stock', 'stocks']);
         return view('products.edit', compact('product'));
     }
 
@@ -78,8 +79,7 @@ class ProductController extends Controller
             $validated = $request->validate([
                 'name' => 'required|string|max:255',
                 'price' => 'required|numeric|min:0',
-                'stock_updates' => 'nullable|array',
-                'stock_updates.*.id' => 'required|exists:stocks,id',
+                'stock_updates' => 'required|array',
                 'stock_updates.*.quantity' => 'required|integer|min:0'
             ]);
 
@@ -88,19 +88,21 @@ class ProductController extends Controller
                 'price' => $validated['price']
             ]);
 
-            if (isset($validated['stock_updates'])) {
-                foreach ($validated['stock_updates'] as $stockUpdate) {
-                    Stock::where('id', $stockUpdate['id'])
-                        ->update(['quantity' => $stockUpdate['quantity']]);
-                }
+            foreach ($validated['stock_updates'] as $stockId => $data) {
+                DB::table('stocks')
+                    ->where('id', $stockId)
+                    ->update(['quantity' => $data['quantity']]);
             }
 
             DB::commit();
-            return redirect()->route('products.index')
+            return redirect()
+                ->route('products.index')
                 ->with('success', 'Produto atualizado com sucesso.');
         } catch (\Exception $e) {
             DB::rollback();
-            return back()->withInput()->withErrors(['error' => 'Erro ao atualizar produto.']);
+            return back()
+                ->withInput()
+                ->withErrors(['error' => 'Erro ao atualizar produto.']);
         }
     }
 }
