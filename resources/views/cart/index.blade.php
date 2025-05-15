@@ -43,9 +43,28 @@
 
         <div class="card mt-4">
             <div class="card-body">
-                <h5>Finalizar Compra</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="input-group">
+                            <input type="text" id="coupon_code" class="form-control" placeholder="Código do cupom">
+                            <button class="btn btn-secondary" type="button" onclick="applyCoupon()">Aplicar Cupom</button>
+                        </div>
+                        <small id="coupon-message" class="text-danger"></small>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <p>Subtotal: R$ <span id="subtotal">{{ number_format($subtotal, 2, ',', '.') }}</span></p>
+                        <p>Frete: R$ <span id="shipping">{{ number_format($shipping, 2, ',', '.') }}</span></p>
+                        <p id="discount-row" style="display: none">Desconto: R$ <span id="discount">0,00</span></p>
+                        <p><strong>Total: R$ <span id="total">{{ number_format($subtotal + $shipping, 2, ',', '.') }}</span></strong></p>
+                    </div>
+                </div>
+
                 <form action="{{ route('cart.checkout') }}" method="POST">
                     @csrf
+                    <input type="hidden" name="coupon_id" id="coupon_id">
                     <div class="mb-3">
                         <label for="customer_name" class="form-label">Nome</label>
                         <input type="text" class="form-control" id="customer_name" name="customer_name" required>
@@ -62,6 +81,39 @@
                 </form>
             </div>
         </div>
+
+        <script>
+        function applyCoupon() {
+            const code = document.getElementById('coupon_code').value;
+            const subtotal = {{ $subtotal }};
+
+            fetch('{{ route('coupons.apply') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({ coupon_code: code, subtotal: subtotal })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById('coupon-message').textContent = data.error;
+                    document.getElementById('discount-row').style.display = 'none';
+                    document.getElementById('coupon_id').value = '';
+                } else {
+                    document.getElementById('coupon-message').textContent = '';
+                    document.getElementById('discount-row').style.display = 'block';
+                    document.getElementById('discount').textContent = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(data.discount);
+                    document.getElementById('coupon_id').value = data.coupon_id;
+                    
+                    // Atualiza o total
+                    const total = subtotal + {{ $shipping }} - data.discount;
+                    document.getElementById('total').textContent = new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2 }).format(total);
+                }
+            });
+        }
+        </script>
     @else
         <div class="alert alert-info">
             Seu carrinho está vazio.

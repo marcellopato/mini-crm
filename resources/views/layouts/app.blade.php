@@ -18,6 +18,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('cart') }}">Carrinho</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('coupons.index') }}">Cupons</a>
+                    </li>
                 </ul>
             </div>
         </div>
