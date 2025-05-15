@@ -8,6 +8,7 @@ Sistema desenvolvido com Laravel para controle de Pedidos, Produtos, Cupons e Es
 - MySQL 5.7+
 - Composer
 - Node.js & NPM
+- Laravel 10.x
 
 ## Instalação
 
